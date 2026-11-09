@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Rey o Culo - Juego de Cartas P2P</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="icon" type="image/png" href="./icon-192.png">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+</head>
+
+<body>
+
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+
+    <div id="app">
+
+        <header id="main-header" class="header">
+            <div class="header-left">
+                <div class="brand-logo">
+                    <span class="brand-name">REY O CULO</span>
+                </div>
+                <div id="header-round-pill" class="header-round-pill hidden">
+                    <span class="r-label">RONDA</span>
+                    <span id="game-round-num" class="r-val">1</span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div id="connection-status-pill" class="status-pill offline">
+                    <span class="status-dot"></span>
+                    <span id="status-text">Desconectado</span>
+                </div>
+                <button id="btn-toggle-sound" class="btn-icon" title="Sonido">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <button id="btn-rules-modal" class="btn-icon" title="Reglas del Juego">
+                    <i class="fa-solid fa-circle-info"></i>
+                </button>
+            </div>
+        </header>
+
+        <section id="home-view" class="view active">
+            <div class="hero-container">
+                <div class="hero-cards-preview">
+                    <div class="card-preview c-left">👑</div>
+                    <div class="card-preview c-center">⚡</div>
+                    <div class="card-preview c-right">💩</div>
+                </div>
+
+                <h1 class="hero-title">REY O CULO</h1>
+                <p class="hero-subtitle">El clásico juego de cartas español en tiempo real (P2P)</p>
+
+                <div class="home-actions">
+                    <button id="btn-open-create" class="btn-primary pulse">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        CREAR SALA (HOST P2P)
+                    </button>
+                    <button id="btn-open-bots" class="btn-secondary btn-bots-mode">
+                        MODO SOLITARIO (VS 3 BOTS)
+                    </button>
+                    <button id="btn-open-join" class="btn-secondary">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        UNIRSE A SALA
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="setup-view" class="view hidden">
+            <div class="view-header">
+                <button class="btn-back btn-back-home"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2 id="setup-title">Configuración</h2>
+            </div>
+
+            <div class="glass-card setup-card">
+                <div class="form-group">
+                    <label for="inp-player-name"><i class="fa-solid fa-user"></i> Tu Nombre / Alias</label>
+                    <input type="text" id="inp-player-name" placeholder="Ej: Alex, Sam, Dani..." maxlength="15"
+                        autocomplete="off">
+                </div>
+
+                <div class="form-group hidden" id="group-room-code">
+                    <label for="inp-room-code"><i class="fa-solid fa-key"></i> Código de Sala (Room ID)</label>
+                    <input type="text" id="inp-room-code" placeholder="Ej: K7X9P" maxlength="8"
+                        style="text-transform: uppercase;">
+                </div>
+
+                <button id="btn-submit-setup" class="btn-primary">
+                    CONTINUAR <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <section id="lobby-view" class="view hidden">
+            <div class="view-header">
+                <button class="btn-back btn-back-home"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2>Sala de Espera</h2>
+            </div>
+
+            <div class="lobby-grid">
+
+                <div class="glass-card room-info-card">
+                    <div class="room-code-badge">
+                        <span class="label">CÓDIGO DE SALA:</span>
+                        <h3 id="display-room-code">-----</h3>
+                        <button id="btn-copy-code" class="btn-small"><i class="fa-solid fa-copy"></i> Copiar
+                            Link</button>
+                    </div>
+
+                    <div id="qrcode-container">
+                        <div id="qrcode"></div>
+                        <p class="qr-hint">Escanea con la cámara del móvil para unirte</p>
+                    </div>
+                </div>
+
+                <div class="glass-card players-lobby-card">
+                    <div class="card-title-row">
+                        <span><i class="fa-solid fa-users"></i> Jugadores En Sala (<span
+                                id="connected-count">0</span>)</span>
+                        <span class="min-hint">(Mínimo 3)</span>
+                    </div>
+
+                    <ul id="lobby-players-list" class="players-list">
+
+                    </ul>
+
+                    <div id="host-controls" class="host-controls-box hidden">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-layer-group"></i> Número de Barajas Española</label>
+                            <div class="segmented-control" id="deck-selector">
+                                <button class="seg-btn active" data-decks="AUTO">Auto</button>
+                                <button class="seg-btn" data-decks="1">1 (40c)</button>
+                                <button class="seg-btn" data-decks="2">2 (80c)</button>
+                                <button class="seg-btn" data-decks="3">3 (120c)</button>
+                            </div>
+                        </div>
+
+                        <button id="btn-start-game" class="btn-primary pulse" disabled>
+                            <i class="fa-solid fa-play"></i> INICIAR PARTIDA
+                        </button>
+                    </div>
+
+                    <p id="client-lobby-msg" class="lobby-waiting-msg">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Esperando a que el anfitrión inicie la partida...
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="game-view" class="view hidden">
+
+            <div class="game-top-bar">
+                <div id="log-marquee" class="log-marquee">
+                    <span id="log-latest">Partida en curso...</span>
+                </div>
+            </div>
+
+            <div id="players-strip" class="players-strip">
+
+            </div>
+
+            <div id="felt-table" class="felt-table">
+
+                <div class="table-watermark">REY O CULO</div>
+
+                <div id="table-pile-container" class="table-pile-container">
+                    <div id="played-cards-stack" class="played-cards-stack">
+
+                    </div>
+
+                    <div id="last-move-info" class="last-move-info hidden">
+                        <span id="last-player-name">---</span>
+                        <span id="last-combo-desc">---</span>
+                    </div>
+
+                    <div id="pile-count-badge" class="pile-count-badge">
+                        <i class="fa-solid fa-layer-group"></i> Total en mesa: <span id="pile-size">0</span>
+                    </div>
+                </div>
+
+                <div id="plina-overlay" class="plina-overlay hidden">
+                    <div class="plina-content">
+                        <span class="plina-icon">⚡</span>
+                        <h2 class="plina-title">¡PLINA!</h2>
+                        <p id="plina-desc" class="plina-desc">¡Turno saltado!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tribute-modal" class="modal-overlay hidden">
+                <div class="glass-card tribute-card">
+                    <h2><span class="crown-icon">👑</span> Intercambio de Tributo</h2>
+                    <p id="tribute-instructions">Has recibido las mejores cartas del Culo. Selecciona las cartas que
+                        deseas entregarle de vuelta:</p>
+
+                    <div id="tribute-received-box" class="tribute-received-box">
+                        <p class="sub">Cartas recibidas:</p>
+                        <div id="tribute-received-cards" class="tribute-cards-row"></div>
+                    </div>
+
+                    <p class="sub">Selecciona <strong id="tribute-count-needed">1</strong> carta(s) de tu mano para
+                        devolver:</p>
+                    <div id="tribute-hand-selector" class="tribute-hand-selector"></div>
+
+                    <button id="btn-submit-tribute" class="btn-primary" disabled>
+                        ENTREGAR TRIBUTO <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="player-hand-container">
+                <div class="hand-header">
+                    <div class="selection-status">
+                        <span id="selection-text">Selecciona tus cartas</span>
+                    </div>
+                    <div class="hand-count-badge">
+                        <i class="fa-solid fa-hand"></i> <span id="my-card-count">0</span> cartas
+                    </div>
+                </div>
+
+                <div id="cards-fan" class="cards-fan">
+
+                </div>
+
+                <div class="hand-actions-bar">
+                    <button id="btn-play-cards" class="btn-primary btn-action" disabled>
+                        <i class="fa-solid fa-circle-up"></i>
+                        JUGAR <span id="play-btn-count"></span>
+                    </button>
+                    <button id="btn-pass-turn" class="btn-secondary btn-action" disabled>
+                        <i class="fa-solid fa-forward"></i>
+                        PASAR
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="round-over-view" class="view hidden">
+            <div class="glass-card podium-card">
+                <div class="podium-header">
+                    <h2 class="podium-title">🏆 Fin de la Ronda <span id="finished-round-num">1</span></h2>
+                    <p class="podium-subtitle">Nuevas Jerarquías Asignadas</p>
+                </div>
+
+                <div id="podium-list" class="podium-list">
+
+                </div>
+
+                <div class="podium-actions">
+                    <button id="btn-next-round" class="btn-primary pulse hidden">
+                        SIGUIENTE RONDA <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    <p id="podium-waiting-msg" class="lobby-waiting-msg">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Esperando al anfitrión para comenzar la siguiente
+                        ronda...
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <div id="rules-modal" class="modal-overlay hidden">
+            <div class="glass-card rules-card">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-book-open"></i> Reglas de Rey o Culo</h3>
+                    <button id="btn-close-rules" class="btn-close" aria-label="Cerrar"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="rules-content">
+                    <h4>Jerarquía de Poder (de menor a mayor)</h4>
+                    <p class="power-chain">3 < 4 < 5 < 6 < 7 < Sota (10) < Caballo (11) < Rey (12) < As (1) < <strong>2
+                            (Corte)</strong></p>
+
+                    <h4>Dinámica de Juego</h4>
+                    <ul>
+                        <li><strong>Apertura:</strong> El jugador en turno lanza 1 o varias cartas del <em>mismo
+                                valor</em>.</li>
+                        <li><strong>Respuesta:</strong> El siguiente debe tirar el <em>mismo número de cartas</em> con
+                            valor igual o superior, o pasar.</li>
+                        <li><strong>⚡ Regla de la Plina:</strong> Si tiras exactamente el mismo valor de cartas que el
+                            jugador anterior, ¡haces <strong>PLINA</strong>! El turno del siguiente jugador se salta
+                            automáticamente.</li>
+                        <li><strong>Cortes de mesa:</strong>
+                            <ul>
+                                <li>Tirar un <strong>2</strong> limpia la mesa inmediatamente.</li>
+                                <li>Acumular <strong>4 cartas del mismo valor</strong> consecutivas limpia la mesa.</li>
+                                <li>Si todos pasan tras una tirada, se limpia la mesa.</li>
+                                <li><strong>🌟 2 de Oros:</strong> Limpia la baza de inmediato (se puede jugar contra
+                                    cartas solas, parejas, tríos, etc.). Si quien lo tiene no lo usa antes de que
+                                    termine la ronda, es castigado a ser <strong>Culo</strong> en la siguiente ronda.
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>Tributos entre Rondas</h4>
+                    <ul>
+                        <li><strong>Gran Culo / Culo / Viceculo:</strong> Entrega automáticamente sus cartas más altas
+                            (3, 2 o 1 respectivamente) al Presidente correspondiente.</li>
+                        <li><strong>Presidente / Vicepresidente:</strong> Elige libremente qué cartas devolver al Culo
+                            correspondiente.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/cards.js?v=3"></script>
+    <script src="js/game-engine.js?v=3"></script>
+    <script src="js/p2p-network.js?v=3"></script>
+    <script src="js/audio-synth.js?v=3"></script>
+    <script src="js/app.js?v=3"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    for (let name of names) {
+                        if (name !== 'reyoculo-v3') caches.delete(name);
+                    }
+                });
+            }
+            navigator.serviceWorker.register('./sw.js?v=3')
+                .then(reg => {
+                    console.log('PWA Service Worker v3 registrado');
+                    reg.update();
+                })
+                .catch(err => console.log('PWA SW registro fallido:', err));
+        }
+    </script>
+</body>
+
+</html>
